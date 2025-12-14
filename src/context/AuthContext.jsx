@@ -1,61 +1,65 @@
 import { createContext, useEffect, useState } from "react";
-import apiClient from "../hooks/apiClinent"; 
-import { Navigate } from "react-router";
-// spelling ঠিক করো: apiClient.js ফাইলেও spelling ঠিক থাকা দরকার
+import apiClient from "../hooks/axiosInstance";
+import { useNavigate } from "react-router"; // <-- useNavigate ইম্পোর্ট করুন
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Load tokens from localStorage
+  const navigate = useNavigate(); // <-- এটা ব্যবহার করুন
+
   const getToken = () => {
-    const token = localStorage.getItem("authTokens");
-    return token ? JSON.parse(token) : null;
+    const tokenString = localStorage.getItem("authTokens");
+    if (!tokenString) return null;
+    try {
+      return JSON.parse(tokenString);
+    } catch (e) {
+      return null;
+    }
   };
 
   const [authTokens, setAuthTokens] = useState(getToken());
   const [user, setUser] = useState(null);
 
-  // Load user on page refresh if token exists
   useEffect(() => {
     if (authTokens?.access) {
       fetchUserProfile();
+    } else {
+      setUser(null);
     }
   }, [authTokens]);
 
   const fetchUserProfile = async () => {
-    try {
-      const response = await apiClient.get("auth/users/me/", {
-        headers: { Authorization: `JWT ${authTokens?.access}` },
-      });
-      setUser(response.data);
-    } catch (error) {
-      console.log("Error Fetching user", error);
+  try {
+    const response = await apiClient.get("/users/me/");  // authApiClient ব্যবহার করো
+    setUser(response.data);
+  } catch (error) {
+    console.log("Error Fetching user", error.response?.data || error);
+    if (error.response?.status === 401) {
+      logoutUser();
     }
-  };
+  }
+};
 
-  // Login user
   const loginUser = async (userdata) => {
     try {
       const response = await apiClient.post("/auth/jwt/create/", userdata);
-
       if (response.status === 200) {
-        setAuthTokens(response.data);
-        localStorage.setItem("authTokens", JSON.stringify(response.data));
-
-        // Fetch user immediately after login
-        fetchUserProfile();
+        const tokens = response.data; // { access: "...", refresh: "..." }
+        setAuthTokens(tokens);
+        localStorage.setItem("authTokens", JSON.stringify(tokens));
+        await fetchUserProfile();
+        navigate("/dashboard"); // লগইন সাকসেস হলে কোথায় যাবে
       }
     } catch (error) {
       console.error("❌ Login failed:", error.response?.data || error.message);
     }
   };
 
-  // Logout user
   const logoutUser = () => {
     setAuthTokens(null);
     setUser(null);
     localStorage.removeItem("authTokens");
-    Navigate("/"); 
+    navigate("/"); // হোমে বা লগইন পেজে রিডাইরেক্ট
   };
 
   const contextData = {

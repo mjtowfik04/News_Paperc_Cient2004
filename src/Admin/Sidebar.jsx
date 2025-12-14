@@ -9,7 +9,6 @@ import {
 } from "react-icons/fi";
 import { Link } from "react-router";
 import AuthContext from "../context/AuthContext";
-// import { useContext } from "react";
 
 const Sidebar = () => {
 //   const { user } = useContext(AuthContext);
@@ -18,13 +17,13 @@ const Sidebar = () => {
   const adminMenus = [
     { to: "/", icon: FiBarChart2, label: "Dashboard" },
     { to: "/products", icon: FiPackage, label: "Products" },
-    { to: "/dashboard/products/add", icon: FiPlusCircle, label: "Add Product" },
+    { to: "/news/add", icon: FiPlusCircle, label: "Add Product" },
     { to: "/categories/add", icon: FiPlusCircle, label: "Add Category" },
     { to: "/comment", icon: FiStar, label: "Comment" },
     { to: "/users", icon: FiUsers, label: "Users" },
   ];
 
-  const menuItems = adminMenus; // 👈 সরাসরি admin menu সেট করা হয়েছে
+  const menuItems = adminMenus;
 
   return (
     <div className="drawer-side z-10">

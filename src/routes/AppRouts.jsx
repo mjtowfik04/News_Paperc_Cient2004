@@ -6,6 +6,7 @@ import NewsDetail from "../componet/NewsDetail";
 import Login from "../pages/Login";
 import AdminDashboard from "../pages/admindasbord";
 import PrivateRoute from "../p/PrivateRoute";
+import AddNews from "../Admin/AddNews";
 
 const AppRouts = () => {
   return (
@@ -16,13 +17,21 @@ const AppRouts = () => {
         <Route path="login" element={<Login />} />
       </Route>
       <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <AdminDashboard/>
-            </PrivateRoute>
-          }
-        />
+        path="/dashboard"
+        element={
+          // <PrivateRoute>
+            <AdminDashboard />
+          // </PrivateRoute>
+        }
+      />
+      <Route
+        path="/news/add"
+        element={
+          // <PrivateRoute>
+            <AddNews />
+          //<PrivateRoute/>
+        }
+      />
 
       {/* <Route index element={<Home/>}></Route> */}
     </Routes>
