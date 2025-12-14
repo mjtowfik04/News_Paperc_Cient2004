@@ -7,6 +7,7 @@ import Login from "../pages/Login";
 import AdminDashboard from "../pages/admindasbord";
 import PrivateRoute from "../p/PrivateRoute";
 import AddNews from "../Admin/AddNews";
+import UploadImages from "../pages/UploadImages";
 
 const AppRouts = () => {
   return (
@@ -30,6 +31,14 @@ const AppRouts = () => {
           // <PrivateRoute>
             <AddNews />
           //<PrivateRoute/>
+        }
+      />
+      <Route
+        path="/upload-images/:newsId"
+        element={
+          <PrivateRoute>
+            <UploadImages />
+          </PrivateRoute>
         }
       />
 

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import apiClient from "../hooks/apiClinent";        // Public API
-import authApiClient from "../hooks/axiosInstance"; // Auth API
+import apiClient from "../hooks/apiClinent";
+import authApiClient from "../hooks/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";  // ← যোগ করুন
 
 const AddNews = () => {
+  const navigate = useNavigate();  // ← যোগ করুন
+
   const {
     register,
     handleSubmit,
@@ -15,22 +18,18 @@ const AddNews = () => {
 
   const [categories, setCategories] = useState([]);
 
-  // Fetch Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await apiClient.get("/categories/");
         setCategories(res.data);
       } catch (error) {
-        console.log("Error loading categories", error);
         toast.error("Failed to load categories!");
       }
     };
-
     fetchCategories();
   }, []);
 
-  // Create News
   const handleProductAdd = async (data) => {
     try {
       const formData = {
@@ -41,10 +40,14 @@ const AddNews = () => {
       };
 
       const productRes = await authApiClient.post("news/", formData);
-      console.log("News Added:", productRes.data);
 
-      toast.success("News added successfully!");
+      const newsId = productRes.data.id;  // ← নতুন নিউজের ID নিন
+
+      toast.success("News added successfully! Now upload images.");
       reset();
+
+      // ← নতুন পেজে রিডাইরেক্ট করুন, newsId পাস করে
+      navigate(`/upload-images/${newsId}`);
     } catch (error) {
       console.log(error.response?.data || error);
       toast.error("Failed to add news!");
@@ -56,37 +59,31 @@ const AddNews = () => {
       <h2 className="text-2xl font-semibold mb-4">Add News</h2>
 
       <form onSubmit={handleSubmit(handleProductAdd)} className="space-y-4">
-        {/* Title */}
+        {/* Title, Content, Category – আগের মতোই */}
         <div>
           <label className="block text-sm font-medium">News Title</label>
           <input
-            {...register("title", { required: true })}
+            {...register("title", { required: "Title is required" })}
             className="input input-bordered w-full"
             placeholder="Enter title"
           />
-          {errors.title && (
-            <p className="text-red-500 text-xs">Title is required</p>
-          )}
+          {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
         </div>
 
-        {/* Content */}
         <div>
           <label className="block text-sm font-medium">Content</label>
           <textarea
-            {...register("content", { required: true })}
-            className="textarea textarea-bordered w-full"
+            {...register("content", { required: "Content is required" })}
+            className="textarea textarea-bordered w-full h-40"
             placeholder="Write content..."
           ></textarea>
-          {errors.content && (
-            <p className="text-red-500 text-xs">Content is required</p>
-          )}
+          {errors.content && <p className="text-red-500 text-xs">{errors.content.message}</p>}
         </div>
 
-        {/* Category Dropdown */}
         <div>
           <label className="block text-sm font-medium">Category</label>
           <select
-            {...register("category", { required: true })}
+            {...register("category", { required: "Category is required" })}
             className="select select-bordered w-full"
           >
             <option value="">Select category</option>
@@ -96,17 +93,14 @@ const AddNews = () => {
               </option>
             ))}
           </select>
-          {errors.category && (
-            <p className="text-red-500 text-xs">Category is required</p>
-          )}
+          {errors.category && <p className="text-red-500 text-xs">{errors.category.message}</p>}
         </div>
 
         <button type="submit" className="btn btn-primary w-full">
-          Add News
+          Create News & Upload Images
         </button>
       </form>
 
-      {/* Toast Container */}
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
