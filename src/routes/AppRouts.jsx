@@ -8,6 +8,9 @@ import AdminDashboard from "../pages/admindasbord";
 import PrivateRoute from "../p/PrivateRoute";
 import AddNews from "../Admin/AddNews";
 import UploadImages from "../pages/UploadImages";
+import CategoriesAdd from "../Admin/CategoriesAdd";
+import AllNewsEditAndUpdate from "../Admin/AllNewsEditAndUpdeate";
+import CategoryNewsPage from "../pages/CategoryNewsPage";
 
 const AppRouts = () => {
   return (
@@ -16,12 +19,13 @@ const AppRouts = () => {
         <Route path="/" element={<Home />} />
         <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="login" element={<Login />} />
+        <Route path="/category/:id" element={<CategoryNewsPage/>} />
       </Route>
       <Route
         path="/dashboard"
         element={
           // <PrivateRoute>
-            <AdminDashboard />
+          <AdminDashboard />
           // </PrivateRoute>
         }
       />
@@ -29,7 +33,7 @@ const AppRouts = () => {
         path="/news/add"
         element={
           // <PrivateRoute>
-            <AddNews />
+          <AddNews />
           //<PrivateRoute/>
         }
       />
@@ -38,6 +42,22 @@ const AppRouts = () => {
         element={
           <PrivateRoute>
             <UploadImages />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/categories-manage"
+        element={
+          <PrivateRoute>
+            <CategoriesAdd />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/all-news-manage"
+        element={
+          <PrivateRoute>
+            <AllNewsEditAndUpdate />
           </PrivateRoute>
         }
       />

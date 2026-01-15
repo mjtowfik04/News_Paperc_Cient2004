@@ -1,45 +1,109 @@
-import { useState, useEffect } from "react";
-import axios from "../../hooks/axiosInstance";
+import React, { useEffect, useState } from "react";
+import authApiClient from "../../hooks/axiosInstance";
 import CategoriesDropdown from "../../componet/CategoryMenu";
 import NewsCard from "../../componet/NewsCard";
+import { Link } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
-  const [news, setNews] = useState([]);
+  const [leadNews, setLeadNews] = useState(null);
+  const [otherNews, setOtherNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAllNews = async () => {
+    setLoading(true);
+    try {
+      const res = await authApiClient.get("/news/?page_size=100&ordering=-created_at");
+      const allNews = res.data.results || [];
+
+      // লিড নিউজ – সর্বশেষ ফিচার্ড (ordering দিয়ে সর্বশেষ আগে আসবে)
+      const featuredNews = allNews.find((item) => item.is_featured);
+      setLeadNews(featuredNews || allNews[0] || null);
+
+      // বাকি নিউজ – নতুন থেকে পুরাতন (ordering ইতিমধ্যে আছে)
+      const remaining = featuredNews
+        ? allNews.filter((item) => item.id !== featuredNews.id)
+        : allNews.slice(1);
+      setOtherNews(remaining);
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    axios
-      .get("/news/")
-      .then((res) => setNews(res.data.results || res.data))
-      .catch((err) => console.error(err));
+    fetchAllNews();
   }, []);
+
+  const NewsSection = ({ title, newsList }) => (
+    <div className="mb-16">
+      <h2 className="text-3xl md:text-4xl font-bold mb-8 border-l-8 border-red-600 pl-6 text-gray-800">
+        {title}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {newsList.map((item) => (
+          <NewsCard key={item.id} news={item} />
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="pt-20 text-center py-32">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-4 text-2xl">নিউজ লোড হচ্ছে...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Categories & All News */}
-      <div className="max-w-6xl mx-auto px-4 mt-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-3xl font-bold font-extrabold text-gray-800">Categories</h2>
-        
+      <CategoriesDropdown />
+
+      {/* লিড নিউজ */}
+      {leadNews && (
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <Link to={`/news/${leadNews.id}`}>
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition">
+              {leadNews.image && leadNews.image.length > 0 ? (
+                <img
+                  src={leadNews.image[0].image}
+                  alt={leadNews.title}
+                  className="w-full h-96 md:h-[700px] object-cover"
+                />
+              ) : (
+                <div className="w-full h-96 md:h-[700px] bg-gray-300 flex items-center justify-center">
+                  <p className="text-4xl text-gray-600">No Image</p>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
+                <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                  <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-4">
+                    {leadNews.title}
+                  </h1>
+                  <p className="text-lg md:text-xl opacity-90 line-clamp-3">
+                    {leadNews.content.substring(0, 300)}...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {/* সেকশনগুলো – নতুন নিউজ উপরে */}
+      <div className="max-w-7xl mx-auto px-4 pb-20">
+        <NewsSection title="বাংলাদেশ" newsList={otherNews.slice(0, 6)} />
+        <NewsSection title="আন্তর্জাতিক" newsList={otherNews.slice(6, 12)} />
+        <NewsSection title="রাজনীতি" newsList={otherNews.slice(12, 18)} />
+        <NewsSection title="খেলাধুলা" newsList={otherNews.slice(18, 24)} />
+        <NewsSection title="বিনোদন" newsList={otherNews.slice(24, 30)} />
       </div>
 
-      {/* Categories Dropdown */}
-      <div className="max-w-6xl mx-auto px-4 mt-4">
-        <CategoriesDropdown />
-      </div>
-      <div className="max-w-6xl mx-auto px-4 mt-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
-          All News
-        </h1>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 pb-12 mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {news.length > 0 ? (
-          news.map((item) => <NewsCard key={item.id} news={item} />)
-        ) : (
-          <p className="text-gray-500 col-span-full text-center">
-            No news available.
-          </p>
-        )}
-      </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

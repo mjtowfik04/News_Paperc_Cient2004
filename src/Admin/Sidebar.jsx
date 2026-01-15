@@ -1,65 +1,55 @@
+import React from "react";
+import { Link } from "react-router-dom";
 import {
   FiBarChart2,
   FiPackage,
   FiPlusCircle,
-  FiShoppingCart,
   FiStar,
   FiTag,
   FiUsers,
+  FiShoppingCart,
 } from "react-icons/fi";
-import { Link } from "react-router";
-import AuthContext from "../context/AuthContext";
 
 const Sidebar = () => {
-//   const { user } = useContext(AuthContext);
-
-  // ✅ Sidebar এ এখন শুধুই admin menu থাকবে
   const adminMenus = [
-    { to: "/", icon: FiBarChart2, label: "Dashboard" },
-    { to: "/products", icon: FiPackage, label: "Products" },
-    { to: "/news/add", icon: FiPlusCircle, label: "Add Product" },
-    { to: "/categories/add", icon: FiPlusCircle, label: "Add Category" },
-    { to: "/comment", icon: FiStar, label: "Comment" },
-    { to: "/users", icon: FiUsers, label: "Users" },
+    { to: "/dashboard", icon: FiBarChart2, label: "ড্যাশবোর্ড" },
+    { to: "/all-news-manage", icon: FiPackage, label: "সব নিউজ" },
+    { to: "/news/add", icon: FiPlusCircle, label: "নিউজ যোগ করুন" },
+    { to: "/categories-manage", icon: FiTag, label: "ক্যাটাগরি" },
+    { to: "/comment", icon: FiStar, label: "কমেন্ট" },
+    { to: "/users", icon: FiUsers, label: "ইউজার" },
   ];
 
-  const menuItems = adminMenus;
-
   return (
-    <div className="drawer-side z-10">
-      <label
-        htmlFor="drawer-toggle"
-        aria-label="close sidebar"
-        className="drawer-overlay"
-      ></label>
+    <aside className="bg-base-200 w-64 min-h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b">
+        <Link to="/dashboard" className="flex items-center gap-3">
+          <FiShoppingCart className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold text-primary">DPI News</h1>
+        </Link>
+      </div>
 
-      <aside className="menu bg-base-200 w-64 min-h-full p-4 text-base-content">
-        {/* Sidebar Header */}
-        <div>
-          <Link to="/" className="flex items-center gap-2 mb-6 px-2">
-            <FiShoppingCart className="h-6 w-6" />
-            <h1 className="text-xl font-bold">PhiMart</h1>
-          </Link>
-        </div>
+      {/* Menu */}
+      <ul className="menu p-4 flex-1">
+        {adminMenus.map((item, index) => (
+          <li key={index} className="mb-2">
+            <Link
+              to={item.to}
+              className="flex items-center gap-3 text-lg hover:bg-primary hover:text-white rounded-lg transition"
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
-        {/* Sidebar Menu */}
-        <ul className="menu menu-md gap-2">
-          {menuItems.map((item, index) => (
-            <li key={index}>
-              <Link to={item.to} className="flex items-center">
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Footer */}
-        <div className="mt-auto pt-6 text-xs text-base-content/70">
-          © 2025 PhiMart Admin
-        </div>
-      </aside>
-    </div>
+      {/* Footer */}
+      <div className="p-4 border-t text-center text-sm text-gray-600">
+        © 2025 DPI News Admin
+      </div>
+    </aside>
   );
 };
 

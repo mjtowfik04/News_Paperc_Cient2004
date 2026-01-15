@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../hooks/apiClinent";
 import authApiClient from "../hooks/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";  // ← যোগ করুন
 
 const AddNews = () => {
-  const navigate = useNavigate();  // ← যোগ করুন
-
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   const [categories, setCategories] = useState([]);
@@ -22,9 +21,10 @@ const AddNews = () => {
     const fetchCategories = async () => {
       try {
         const res = await apiClient.get("/categories/");
-        setCategories(res.data);
+        setCategories(res.data || []);
       } catch (error) {
-        toast.error("Failed to load categories!");
+        console.error("Category load error:", error);
+        toast.error("ক্যাটাগরি লোড করতে সমস্যা হয়েছে");
       }
     };
     fetchCategories();
@@ -33,75 +33,122 @@ const AddNews = () => {
   const handleProductAdd = async (data) => {
     try {
       const formData = {
-        title: data.title,
-        content: data.content,
+        title: data.title.trim(),
+        content: data.content.trim(),
         category: Number(data.category),
         is_published: true,
+        is_featured: data.is_featured || false, // ← ফিচার্ড যোগ করা
       };
 
-      const productRes = await authApiClient.post("news/", formData);
+      const productRes = await authApiClient.post("/news/", formData);
+      const newsId = productRes.data.id;
 
-      const newsId = productRes.data.id;  // ← নতুন নিউজের ID নিন
-
-      toast.success("News added successfully! Now upload images.");
+      toast.success("নিউজ সফলভাবে তৈরি হয়েছে! এখন ছবি আপলোড করুন।");
       reset();
 
-      // ← নতুন পেজে রিডাইরেক্ট করুন, newsId পাস করে
       navigate(`/upload-images/${newsId}`);
     } catch (error) {
-      console.log(error.response?.data || error);
-      toast.error("Failed to add news!");
+      console.error("News create error:", error.response?.data || error);
+      const msg =
+        error.response?.data?.title?.[0] ||
+        error.response?.data?.content?.[0] ||
+        error.response?.data?.category?.[0] ||
+        "নিউজ তৈরি করতে সমস্যা হয়েছে";
+      toast.error(msg);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">Add News</h2>
+    <div className="max-w-3xl mx-auto mt-10 p-8 bg-white shadow-2xl rounded-2xl">
+      <h2 className="text-3xl font-bold text-center mb-8 text-primary">
+        নতুন নিউজ যোগ করুন
+      </h2>
 
-      <form onSubmit={handleSubmit(handleProductAdd)} className="space-y-4">
-        {/* Title, Content, Category – আগের মতোই */}
+      <form onSubmit={handleSubmit(handleProductAdd)} className="space-y-6">
+        {/* টাইটেল */}
         <div>
-          <label className="block text-sm font-medium">News Title</label>
+          <label className="label">
+            <span className="label-text font-semibold text-lg">নিউজের টাইটেল</span>
+          </label>
           <input
-            {...register("title", { required: "Title is required" })}
-            className="input input-bordered w-full"
-            placeholder="Enter title"
+            {...register("title", { required: "টাইটেল দিন" })}
+            type="text"
+            placeholder="এখানে টাইটেল লিখুন..."
+            className="input input-bordered input-lg w-full"
           />
-          {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
+          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
         </div>
 
+        {/* কন্টেন্ট */}
         <div>
-          <label className="block text-sm font-medium">Content</label>
+          <label className="label">
+            <span className="label-text font-semibold text-lg">বিস্তারিত কন্টেন্ট</span>
+          </label>
           <textarea
-            {...register("content", { required: "Content is required" })}
-            className="textarea textarea-bordered w-full h-40"
-            placeholder="Write content..."
+            {...register("content", { required: "কন্টেন্ট লিখুন" })}
+            placeholder="নিউজের বিস্তারিত লিখুন..."
+            className="textarea textarea-bordered textarea-lg w-full h-64 resize-none"
+            rows="10"
           ></textarea>
-          {errors.content && <p className="text-red-500 text-xs">{errors.content.message}</p>}
+          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
         </div>
 
+        {/* ক্যাটাগরি */}
         <div>
-          <label className="block text-sm font-medium">Category</label>
+          <label className="label">
+            <span className="label-text font-semibold text-lg">ক্যাটাগরি</span>
+          </label>
           <select
-            {...register("category", { required: "Category is required" })}
+            {...register("category", { required: "ক্যাটাগরি সিলেক্ট করুন" })}
             className="select select-bordered w-full"
+            defaultValue=""
           >
-            <option value="">Select category</option>
-            {categories?.map((cat) => (
+            <option value="" disabled>
+              একটি ক্যাটাগরি নির্বাচন করুন
+            </option>
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
           </select>
-          {errors.category && <p className="text-red-500 text-xs">{errors.category.message}</p>}
+          {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>}
         </div>
 
-        <button type="submit" className="btn btn-primary w-full">
-          Create News & Upload Images
-        </button>
+        {/* ফিচার্ড নিউজ চেকবক্স */}
+        <div className="form-control">
+          <label className="label cursor-pointer justify-start gap-4">
+            <input
+              type="checkbox"
+              {...register("is_featured")}
+              className="checkbox checkbox-primary checkbox-lg"
+            />
+            <span className="label-text text-lg font-medium">
+              ফিচার্ড নিউজ (হোম পেজে লিড হিসেবে দেখাবে)
+            </span>
+          </label>
+        </div>
+
+        {/* সাবমিট বাটন */}
+        <div className="text-center">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn btn-primary btn-lg w-full md:w-auto px-16"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner"></span>
+                তৈরি হচ্ছে...
+              </>
+            ) : (
+              "নিউজ তৈরি করুন & ছবি আপলোড করুন"
+            )}
+          </button>
+        </div>
       </form>
 
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={4000} />
     </div>
   );
 };
