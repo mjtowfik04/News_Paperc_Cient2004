@@ -8,24 +8,52 @@ import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
   const [leadNews, setLeadNews] = useState(null);
-  const [otherNews, setOtherNews] = useState([]);
+  const [categorizedNews, setCategorizedNews] = useState({});
   const [loading, setLoading] = useState(true);
+  const [categoryMap, setCategoryMap] = useState({}); // ID -> Name
 
   const fetchAllNews = async () => {
     setLoading(true);
     try {
-      const res = await authApiClient.get("/news/?page_size=100&ordering=-created_at");
+      // প্রথমে ক্যাটাগরি লোড করো
+      const catRes = await authApiClient.get("/categories/");
+      const categories = catRes.data || [];
+      const catMap = {};
+      categories.forEach((cat) => {
+        catMap[cat.id] = cat.name;
+      });
+      setCategoryMap(catMap);
+
+      // তারপর নিউজ লোড করো
+      const res = await authApiClient.get(
+        "/news/?page_size=100&ordering=-created_at"
+      );
       const allNews = res.data.results || [];
 
-      // লিড নিউজ – সর্বশেষ ফিচার্ড (ordering দিয়ে সর্বশেষ আগে আসবে)
+      // 🔥 Lead News
       const featuredNews = allNews.find((item) => item.is_featured);
-      setLeadNews(featuredNews || allNews[0] || null);
+      const mainLead = featuredNews || allNews[0] || null;
+      setLeadNews(mainLead);
 
-      // বাকি নিউজ – নতুন থেকে পুরাতন (ordering ইতিমধ্যে আছে)
-      const remaining = featuredNews
-        ? allNews.filter((item) => item.id !== featuredNews.id)
-        : allNews.slice(1);
-      setOtherNews(remaining);
+      // 🔥 Lead বাদ দিয়ে বাকি নিউজ
+      const remaining = mainLead
+        ? allNews.filter((item) => item.id !== mainLead.id)
+        : [];
+
+      // 🔥 Category অনুযায়ী group করা
+      const grouped = remaining.reduce((acc, news) => {
+        const categoryName =
+          (news.category && catMap[news.category]) || "অন্যান্য";
+
+        if (!acc[categoryName]) {
+          acc[categoryName] = [];
+        }
+
+        acc[categoryName].push(news);
+        return acc;
+      }, {});
+
+      setCategorizedNews(grouped);
     } catch (err) {
       console.error("Error:", err);
     } finally {
@@ -37,18 +65,23 @@ const Home = () => {
     fetchAllNews();
   }, []);
 
-  const NewsSection = ({ title, newsList }) => (
-    <div className="mb-16">
-      <h2 className="text-3xl md:text-4xl font-bold mb-8 border-l-8 border-red-600 pl-6 text-gray-800">
-        {title}
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {newsList.map((item) => (
-          <NewsCard key={item.id} news={item} />
-        ))}
+  const NewsSection = ({ title, newsList }) => {
+    if (!newsList || newsList.length === 0) return null;
+
+    return (
+      <div className="mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold mb-8 border-l-8 border-red-600 pl-6 text-gray-800">
+          {title}
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {newsList.map((item) => (
+            <NewsCard key={item.id} news={item} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -63,12 +96,12 @@ const Home = () => {
     <div className="min-h-screen bg-gray-50">
       <CategoriesDropdown />
 
-      {/* লিড নিউজ */}
+      {/* 🔥 Lead News */}
       {leadNews && (
         <div className="max-w-7xl mx-auto px-4 py-12">
           <Link to={`/news/${leadNews.id}`}>
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition">
-              {leadNews.image && leadNews.image.length > 0 ? (
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl transition">
+              {leadNews.image?.length > 0 ? (
                 <img
                   src={leadNews.image[0].image}
                   alt={leadNews.title}
@@ -79,9 +112,10 @@ const Home = () => {
                   <p className="text-4xl text-gray-600">No Image</p>
                 </div>
               )}
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-4">
+                  <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
                     {leadNews.title}
                   </h1>
                   <p className="text-lg md:text-xl opacity-90 line-clamp-3">
@@ -94,13 +128,17 @@ const Home = () => {
         </div>
       )}
 
-      {/* সেকশনগুলো – নতুন নিউজ উপরে */}
+      {/* 🔥 Category Sections (Dynamic) */}
       <div className="max-w-7xl mx-auto px-4 pb-20">
-        <NewsSection title="বাংলাদেশ" newsList={otherNews.slice(0, 6)} />
-        <NewsSection title="আন্তর্জাতিক" newsList={otherNews.slice(6, 12)} />
-        <NewsSection title="রাজনীতি" newsList={otherNews.slice(12, 18)} />
-        <NewsSection title="খেলাধুলা" newsList={otherNews.slice(18, 24)} />
-        <NewsSection title="বিনোদন" newsList={otherNews.slice(24, 30)} />
+        {Object.entries(categorizedNews).map(
+          ([categoryName, newsList]) => (
+            <NewsSection
+              key={categoryName}
+              title={categoryName}
+              newsList={newsList}
+            />
+          )
+        )}
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} />

@@ -11,6 +11,8 @@ import UploadImages from "../pages/UploadImages";
 import CategoriesAdd from "../Admin/CategoriesAdd";
 import AllNewsEditAndUpdate from "../Admin/AllNewsEditAndUpdeate";
 import CategoryNewsPage from "../pages/CategoryNewsPage";
+// import EditNews from "../pages/EditNews";
+import Register from "../pages/SignUp";
 
 const AppRouts = () => {
   return (
@@ -19,6 +21,7 @@ const AppRouts = () => {
         <Route path="/" element={<Home />} />
         <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
         <Route path="/category/:id" element={<CategoryNewsPage/>} />
       </Route>
       <Route
@@ -61,6 +64,12 @@ const AppRouts = () => {
           </PrivateRoute>
         }
       />
+
+      {/* <Route path="/edit-news/:id" element={
+        <PrivateRoute>
+            <EditNews />
+        </PrivateRoute>
+      } /> */}
 
       {/* <Route index element={<Home/>}></Route> */}
     </Routes>
