@@ -12,12 +12,12 @@ import {
 
 const Sidebar = () => {
   const adminMenus = [
-    { to: "/dashboard", icon: FiBarChart2, label: "ড্যাশবোর্ড" },
+    { to: "/", icon: FiBarChart2, label: "ড্যাশবোর্ড" },
     { to: "/all-news-manage", icon: FiPackage, label: "সব নিউজ" },
     { to: "/news/add", icon: FiPlusCircle, label: "নিউজ যোগ করুন" },
     { to: "/categories-manage", icon: FiTag, label: "ক্যাটাগরি" },
-    { to: "/comment", icon: FiStar, label: "কমেন্ট" },
-    { to: "/users", icon: FiUsers, label: "ইউজার" },
+    { to: "/", icon: FiStar, label: "কমেন্ট" },
+    { to: "/", icon: FiUsers, label: "ইউজার" },
   ];
 
   return (
