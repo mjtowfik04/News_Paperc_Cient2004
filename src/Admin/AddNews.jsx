@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 import apiClient from "../hooks/apiClinent";
 import authApiClient from "../hooks/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
@@ -8,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const AddNews = () => {
   const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -23,7 +25,6 @@ const AddNews = () => {
         const res = await apiClient.get("/categories/");
         setCategories(res.data || []);
       } catch (error) {
-        console.error("Category load error:", error);
         toast.error("ক্যাটাগরি লোড করতে সমস্যা হয়েছে");
       }
     };
@@ -37,7 +38,7 @@ const AddNews = () => {
         content: data.content.trim(),
         category: Number(data.category),
         is_published: true,
-        is_featured: data.is_featured || false, // ← ফিচার্ড যোগ করা
+        is_featured: data.is_featured || false,
       };
 
       const productRes = await authApiClient.post("/news/", formData);
@@ -45,10 +46,8 @@ const AddNews = () => {
 
       toast.success("নিউজ সফলভাবে তৈরি হয়েছে! এখন ছবি আপলোড করুন।");
       reset();
-
       navigate(`/upload-images/${newsId}`);
     } catch (error) {
-      console.error("News create error:", error.response?.data || error);
       const msg =
         error.response?.data?.title?.[0] ||
         error.response?.data?.content?.[0] ||
@@ -59,94 +58,127 @@ const AddNews = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-8 bg-white shadow-2xl rounded-2xl">
-      <h2 className="text-3xl font-bold text-center mb-8 text-primary">
-        নতুন নিউজ যোগ করুন
-      </h2>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
 
-      <form onSubmit={handleSubmit(handleProductAdd)} className="space-y-6">
-        {/* টাইটেল */}
-        <div>
-          <label className="label">
-            <span className="label-text font-semibold text-lg">নিউজের টাইটেল</span>
-          </label>
-          <input
-            {...register("title", { required: "টাইটেল দিন" })}
-            type="text"
-            placeholder="এখানে টাইটেল লিখুন..."
-            className="input input-bordered input-lg w-full"
-          />
-          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
-        </div>
+      {/* 🔙 Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="btn btn-ghost mb-6 flex items-center gap-2 text-amber-50 hover:text-blue-600"
+      >
+        <FiArrowLeft size={20} />
+        Back
+      </button>
 
-        {/* কন্টেন্ট */}
-        <div>
-          <label className="label">
-            <span className="label-text font-semibold text-lg">বিস্তারিত কন্টেন্ট</span>
-          </label>
-          <textarea
-            {...register("content", { required: "কন্টেন্ট লিখুন" })}
-            placeholder="নিউজের বিস্তারিত লিখুন..."
-            className="textarea textarea-bordered textarea-lg w-full h-64 resize-none"
-            rows="10"
-          ></textarea>
-          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
-        </div>
+      {/* White Card Box */}
+      <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-10 border border-gray-200">
 
-        {/* ক্যাটাগরি */}
-        <div>
-          <label className="label">
-            <span className="label-text font-semibold text-lg">ক্যাটাগরি</span>
-          </label>
-          <select
-            {...register("category", { required: "ক্যাটাগরি সিলেক্ট করুন" })}
-            className="select select-bordered w-full"
-            defaultValue=""
-          >
-            <option value="" disabled>
-              একটি ক্যাটাগরি নির্বাচন করুন
-            </option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>}
-        </div>
+        <h2 className="text-3xl font-bold text-center mb-10 text-blue-600">
+          নতুন নিউজ যোগ করুন
+        </h2>
 
-        {/* ফিচার্ড নিউজ চেকবক্স */}
-        <div className="form-control">
-          <label className="label cursor-pointer justify-start gap-4">
+        <form onSubmit={handleSubmit(handleProductAdd)} className="space-y-6">
+
+          {/* টাইটেল */}
+          <div>
+            <label className="label">
+              <span className="label-text font-semibold text-gray-700 text-lg">
+                নিউজের টাইটেল
+              </span>
+            </label>
             <input
-              type="checkbox"
-              {...register("is_featured")}
-              className="checkbox checkbox-primary checkbox-lg"
+              {...register("title", { required: "টাইটেল দিন" })}
+              type="text"
+              placeholder="এখানে টাইটেল লিখুন..."
+              className="input input-bordered input-primary w-full focus:border-blue-500 focus:ring focus:ring-blue-200"
             />
-            <span className="label-text text-lg font-medium">
-              ফিচার্ড নিউজ (হোম পেজে লিড হিসেবে দেখাবে)
-            </span>
-          </label>
-        </div>
-
-        {/* সাবমিট বাটন */}
-        <div className="text-center">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn btn-primary btn-lg w-full md:w-auto px-16"
-          >
-            {isSubmitting ? (
-              <>
-                <span className="loading loading-spinner"></span>
-                তৈরি হচ্ছে...
-              </>
-            ) : (
-              "নিউজ তৈরি করুন & ছবি আপলোড করুন"
+            {errors.title && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.title.message}
+              </p>
             )}
-          </button>
-        </div>
-      </form>
+          </div>
+
+          {/* কন্টেন্ট */}
+          <div>
+            <label className="label">
+              <span className="label-text font-semibold text-gray-700 text-lg">
+                বিস্তারিত কন্টেন্ট
+              </span>
+            </label>
+            <textarea
+              {...register("content", { required: "কন্টেন্ট লিখুন" })}
+              placeholder="নিউজের বিস্তারিত লিখুন..."
+              className="textarea textarea-bordered w-full h-56 resize-none focus:border-blue-500 focus:ring focus:ring-blue-200"
+            ></textarea>
+            {errors.content && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.content.message}
+              </p>
+            )}
+          </div>
+
+          {/* ক্যাটাগরি */}
+          <div>
+            <label className="label">
+              <span className="label-text font-semibold text-gray-700 text-lg">
+                ক্যাটাগরি
+              </span>
+            </label>
+            <select
+              {...register("category", { required: "ক্যাটাগরি সিলেক্ট করুন" })}
+              className="select select-bordered w-full focus:border-blue-500 focus:ring focus:ring-blue-200"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                একটি ক্যাটাগরি নির্বাচন করুন
+              </option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            {errors.category && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.category.message}
+              </p>
+            )}
+          </div>
+
+          {/* ফিচার্ড চেকবক্স */}
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <input
+                type="checkbox"
+                {...register("is_featured")}
+                className="checkbox checkbox-primary"
+              />
+              <span className="label-text font-medium text-gray-700">
+                ফিচার্ড নিউজ (হোম পেজে লিড হিসেবে দেখাবে)
+              </span>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <div className="text-center pt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto px-14"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner"></span>
+                  তৈরি হচ্ছে...
+                </>
+              ) : (
+                "নিউজ তৈরি করুন & ছবি আপলোড করুন"
+              )}
+            </button>
+          </div>
+
+        </form>
+      </div>
 
       <ToastContainer position="top-right" autoClose={4000} />
     </div>

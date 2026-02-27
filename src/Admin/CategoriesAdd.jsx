@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import authApiClient from "../hooks/axiosInstance"; // authenticated client
+import { useNavigate } from "react-router-dom";
+import authApiClient from "../hooks/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FiArrowLeft } from "react-icons/fi";
 
 const CategoriesAdd = () => {
+  const navigate = useNavigate();
+
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -16,7 +20,6 @@ const CategoriesAdd = () => {
       setCategories(res.data);
     } catch (err) {
       toast.error("ক্যাটাগরি লোড করতে সমস্যা হয়েছে");
-      console.error("Fetch error:", err);
     }
   };
 
@@ -24,95 +27,102 @@ const CategoriesAdd = () => {
     fetchCategories();
   }, []);
 
-  // Add or Update Category
+  // Add or Update
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!name.trim()) {
       toast.error("ক্যাটাগরির নাম দিন!");
       return;
     }
 
     setLoading(true);
+
     try {
       if (editingId) {
-        // ← PATCH ব্যবহার করা হয়েছে (partial update)
         await authApiClient.patch(`/categories/${editingId}/`, { name });
         toast.success("ক্যাটাগরি আপডেট হয়েছে!");
       } else {
-        // Add new
         await authApiClient.post("/categories/", { name });
         toast.success("নতুন ক্যাটাগরি যোগ হয়েছে!");
       }
+
       setName("");
       setEditingId(null);
-      fetchCategories(); // রিফ্রেশ লিস্ট
+      fetchCategories();
     } catch (err) {
-      console.error("Submit error:", err.response?.data || err);
-      const errorMsg = err.response?.data?.name?.[0] || "সমস্যা হয়েছে, আবার চেষ্টা করুন";
-      toast.error(errorMsg);
+      toast.error("সমস্যা হয়েছে, আবার চেষ্টা করুন");
     } finally {
       setLoading(false);
     }
   };
 
-  // Edit Category
   const handleEdit = (cat) => {
     setName(cat.name);
     setEditingId(cat.id);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // ফর্মে স্ক্রল
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Delete Category
   const handleDelete = async (id) => {
-    if (!window.confirm("এই ক্যাটাগরি ডিলিট করবেন? এটা থেকে নিউজও প্রভাবিত হতে পারে!")) return;
+    if (!window.confirm("এই ক্যাটাগরি ডিলিট করবেন?")) return;
 
     try {
       await authApiClient.delete(`/categories/${id}/`);
       toast.success("ক্যাটাগরি ডিলিট হয়েছে");
       fetchCategories();
     } catch (err) {
-      console.error("Delete error:", err.response?.data || err);
       toast.error("ডিলিট করতে সমস্যা হয়েছে");
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-4 sm:p-6">
+
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="btn btn-ghost mb-6 flex items-center gap-2"
+      >
+        <FiArrowLeft />
+        Back
+      </button>
+
+      {/* Page Title */}
       <h1 className="text-3xl font-bold mb-8 text-center text-primary">
-        ক্যাটাগরি ম্যানেজমেন্ট
+        ক্যাটাগরি ম্যানেজ করুন
       </h1>
 
-      {/* Add/Edit Form */}
-      <div className="bg-white shadow-xl rounded-lg p-6 mb-8 border">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+      {/* Form Box */}
+      <div className="bg-white shadow-lg rounded-xl p-6 border mb-10">
+        <h2 className="text-xl font-semibold mb-5 text-gray-800">
           {editingId ? "ক্যাটাগরি এডিট করুন" : "নতুন ক্যাটাগরি যোগ করুন"}
         </h2>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col sm:flex-row gap-4"
+        >
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="ক্যাটাগরির নাম লিখুন (যেমন: রাজনীতি)"
-            className="input input-bordered input-primary flex-1"
-            required
+            placeholder="ক্যাটাগরির নাম লিখুন..."
+            className="input input-bordered w-full flex-1"
           />
+
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary min-w-32"
+              className="btn btn-primary min-w-[110px]"
             >
-              {loading ? (
-                <>
-                  <span className="loading loading-spinner"></span>
-                  লোডিং...
-                </>
-              ) : editingId ? (
-                "আপডেট করুন"
-              ) : (
-                "যোগ করুন"
-              )}
+              {loading
+                ? "লোডিং..."
+                : editingId
+                ? "আপডেট"
+                : "যোগ করুন"}
             </button>
+
             {editingId && (
               <button
                 type="button"
@@ -129,34 +139,35 @@ const CategoriesAdd = () => {
         </form>
       </div>
 
-      {/* Categories List */}
-      <div className="bg-white shadow-xl rounded-lg p-6 border">
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+      {/* List Box */}
+      <div className="bg-white shadow-lg rounded-xl p-6 border">
+        <h2 className="text-xl font-semibold mb-6 text-gray-800">
           বিদ্যমান ক্যাটাগরি ({categories.length})
         </h2>
+
         {categories.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-xl">
-              এখনো কোনো ক্যাটাগরি যোগ করা হয়নি।
-            </p>
-          </div>
+          <p className="text-center text-gray-500 py-10">
+            কোনো ক্যাটাগরি পাওয়া যায়নি
+          </p>
         ) : (
           <div className="space-y-4">
             {categories.map((cat) => (
               <div
                 key={cat.id}
-                className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-lg hover:bg-gray-50 transition-all"
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center border rounded-lg p-4 hover:bg-gray-50 transition"
               >
-                <span className="text-xl font-medium text-gray-800">
+                <span className="text-lg font-medium text-gray-800">
                   {cat.name}
                 </span>
-                <div className="flex gap-3 mt-3 sm:mt-0">
+
+                <div className="flex gap-2 mt-3 sm:mt-0">
                   <button
                     onClick={() => handleEdit(cat)}
                     className="btn btn-warning btn-sm"
                   >
                     এডিট
                   </button>
+
                   <button
                     onClick={() => handleDelete(cat.id)}
                     className="btn btn-error btn-sm"
